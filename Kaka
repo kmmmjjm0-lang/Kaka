@@ -1,0 +1,154 @@
+--[[
+    KAKA SUBATHON 🌈
+    Creator: Kaka
+    Rainbow Timer Edition
+]]
+
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+
+local old = CoreGui:FindFirstChild("KAKA_SUBATHON")
+if old then old:Destroy() end
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "KAKA_SUBATHON"
+gui.ResetOnSpawn = false
+gui.Parent = CoreGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.fromOffset(290,370)
+frame.Position = UDim2.new(0.5,-145,0.5,-185)
+frame.BackgroundColor3 = Color3.fromRGB(20,20,30)
+frame.Parent = gui
+
+Instance.new("UICorner",frame).CornerRadius = UDim.new(0,16)
+
+local stroke = Instance.new("UIStroke",frame)
+stroke.Thickness = 3
+
+local title = Instance.new("TextButton")
+title.Size = UDim2.new(1,0,0,45)
+title.BackgroundTransparency = 1
+title.Text = "🌈 KAKA SUBATHON"
+title.TextColor3 = Color3.new(1,1,1)
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.Parent = frame
+
+local timer = Instance.new("TextLabel")
+timer.Position = UDim2.fromOffset(10,55)
+timer.Size = UDim2.new(1,-20,0,65)
+timer.BackgroundColor3 = Color3.fromRGB(40,40,55)
+timer.TextColor3 = Color3.new(1,1,1)
+timer.TextScaled = true
+timer.Font = Enum.Font.GothamBold
+timer.Parent = frame
+
+Instance.new("UICorner",timer).CornerRadius = UDim.new(0,10)
+
+local seconds = 3600
+local running = false
+
+local function update()
+    timer.Text = string.format("%02d:%02d:%02d",
+        math.floor(seconds/3600),
+        math.floor(seconds%3600/60),
+        math.floor(seconds%60))
+end
+
+local function button(name,amount,x,y)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.fromOffset(125,42)
+    b.Position = UDim2.fromOffset(x,y)
+    b.BackgroundColor3 = Color3.fromRGB(45,45,65)
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Text = name
+    b.TextScaled = true
+    b.Font = Enum.Font.GothamBold
+    b.Parent = frame
+    Instance.new("UICorner",b).CornerRadius = UDim.new(0,9)
+
+    b.Activated:Connect(function()
+        if amount == "START" then
+            running = true
+        elseif amount == "PAUSE" then
+            running = false
+        elseif amount == "RESET" then
+            running = false
+            seconds = 3600
+        else
+            seconds = seconds + amount
+        end
+        update()
+    end)
+end
+
+button("+10 Seconds",10,12,135)
+button("+1 Minute",60,153,135)
+button("+5 Minutes",300,12,185)
+button("+1 Hour",3600,153,185)
+button("+10 Hours",36000,12,235)
+button("START","START",153,235)
+button("PAUSE","PAUSE",12,290)
+button("RESET","RESET",153,290)
+
+local close = Instance.new("TextButton")
+close.Size = UDim2.fromOffset(28,28)
+close.Position = UDim2.new(1,-32,0,5)
+close.Text = "X"
+close.Parent = frame
+
+local hue = 0
+local alive = true
+
+local connection = RunService.Heartbeat:Connect(function(dt)
+    if not alive then return end
+
+    hue = (hue + dt*0.2)%1
+    stroke.Color = Color3.fromHSV(hue,1,1)
+
+    if running then
+        seconds = math.max(0,seconds-dt)
+        if seconds <= 0 then running = false end
+        update()
+    end
+end)
+
+close.Activated:Connect(function()
+    alive = false
+    connection:Disconnect()
+    gui:Destroy()
+end)
+
+-- Drag support
+local dragging = false
+local dragStart, startPos
+
+title.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch
+    or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.Touch
+    or input.UserInputType == Enum.UserInputType.MouseMovement) then
+        local delta = input.Position-dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,startPos.X.Offset+delta.X,
+            startPos.Y.Scale,startPos.Y.Offset+delta.Y)
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch
+    or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+update()
